@@ -17,7 +17,8 @@
  */
 var db = null
 var options = {
-    columns: 3
+    columns: 3,
+    reload_t: 60
 }
 
 function dbError(t, e){
@@ -37,10 +38,11 @@ function loadWidgets(){
                 +', column INTEGER DEFAULT(0)'
                 +', max_posts INTEGER DEFAULT(5)'
                 +')')
-        tx.executeSql('SELECT id FROM widgets', [], function(tx, results){
+        tx.executeSql('SELECT id FROM widgets ORDER BY position ASC', [], function(tx, results){
             for(var i=0; i<results.rows.length; i++){
                 loadWidget(results.rows.item(i).id)
             }
+            setTimeout(options.reload_t*1000, loadWidgets)
         })
     }, dbError)
 }
@@ -72,7 +74,7 @@ function deleteWidget(id){
                 item = results.rows.item(0)
                 tx.executeSql('DELETE FROM widgets WHERE id=?', 
                     [item.id], function(tx, results){
-                    $('#widget-'+item.position).remove()
+                    $('#widget-'+item.id).remove()
                 })
         })
     }, dbError)
@@ -88,7 +90,7 @@ function updateWidgetLoadTime(id){
 function loadWidget(id){
     console.log('loadWidget', id)
     db.transaction(function(tx){
-        tx.executeSql('SELECT * FROM widgets WHERE id=? ORDER BY position ASC', [id], 
+        tx.executeSql('SELECT * FROM widgets WHERE id=?', [id], 
             function(tx, results){
                 loadWidgetData(results.rows.item(0))
         })
@@ -98,11 +100,19 @@ function loadWidget(id){
 function loadWidgetData(item){
     console.log('loadWidgetData', item.id)
     var widget_div = '#widget-'+item.id
-    var container = $('#widgetsContainer'+item.column)
-    $(widget_div).remove()
-    container.append('<div class="widget" id="widget-'+item.id+'"></div>')  
     var div = $(widget_div)
-    div.empty()
+    var container = $('#widgetsContainer'+item.column)
+    if(div.length == 0){
+        container.append('<div class="widget" id="widget-'+item.id+'" data-position="'+item.position+'"></div>')
+        div = $(widget_div)
+    }else{
+        div.empty()
+        console.log(div)
+        if(div[0].dataset.position != item.position){
+            div[0].dataset.position = item.position
+            reorderColumn(item.column)
+        }
+    }
     div.append('<img class="widget-loader" src="img/loader.gif" />')
     div.rss(item.url, {
         limit: item.max_posts,
@@ -148,6 +158,20 @@ function loadWidgetData(item){
         finishWidget(item)
     })
 
+}
+
+function reorderColumn(column){
+    console.log('reorderColumn', column)
+    var container = $('#widgetsContainer'+column)
+    var wlist = container.children()
+    wlist.sort(function(w1, w2){
+        return w1.dataset.position - w2.dataset.position
+    })
+    for(var i=0; i<wlist.length; i++){
+        w = $(wlist[i])
+        w.detach()
+        w.appendTo(container)
+    }
 }
 
 function finishWidget(item){

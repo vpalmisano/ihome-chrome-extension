@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2013 Vittorio Palmisano <vpalmisano@gmail.com>
- */
 chrome.browserAction.onClicked.addListener(function(tab) {
     chrome.tabs.query({
         "url": chrome.extension.getURL("/index.html")

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Vittorio Palmisano <vpalmisano@gmail.com>
+ *  Copyright (c) 2013 Vittorio Palmisano <vpalmisano@gmail.com>
  *
  *  This file is free software: you may copy, redistribute and/or modify it  
  *  under the terms of the GNU General Public License as published by the  
@@ -213,7 +213,7 @@ function loadFeedData(item){
 }
 
 function scheduleReload(id){
-    setTimeout(function(){ loadWidgetData(id); }, options.reload_t*1000)
+    setTimeout(function(){ loadWidget(id); }, options.reload_t*1000)
 }
 
 function reorderColumn(column){

@@ -7,11 +7,8 @@
     "offline_enabled": false,
     "content_security_policy": "script-src 'self' 'unsafe-eval' https://ssl.google-analytics.com https://ajax.googleapis.com https://apis.google.com; object-src 'self';",
     "permissions": [
-        "tabs", 
-        "notifications"
+        "tabs"
     ],
-    "chrome_url_overrides": {
-    },
     "icons": { 
         "16": "img/icon16.png",
         "48": "img/icon48.png",
@@ -25,11 +22,5 @@
     "background": {
         "scripts": ["js/background.js"],
         "persistent": true
-    },
-    "content_scripts": [{
-        "all_frames": true,
-        "js": ["js/content.js"],
-        "matches": ["http://*/*", "https://*/*"],
-        "run_at": "document_idle"
-    }]
+    }
 }

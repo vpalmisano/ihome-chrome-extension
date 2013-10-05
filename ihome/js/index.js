@@ -18,7 +18,7 @@
 var db = null
 var options = {
     columns: 3,
-    reload_t: 60
+    reload_t: 60*5
 }
 
 function dbError(t, e){
@@ -38,11 +38,10 @@ function loadWidgets(){
                 +', column INTEGER DEFAULT(0)'
                 +', max_posts INTEGER DEFAULT(5)'
                 +')')
-        tx.executeSql('SELECT id FROM widgets ORDER BY position ASC', [], function(tx, results){
+        tx.executeSql('SELECT * FROM widgets ORDER BY position ASC', [], function(tx, results){
             for(var i=0; i<results.rows.length; i++){
-                loadWidget(results.rows.item(i).id)
+                loadWidgetData(results.rows.item(i))
             }
-            setTimeout(options.reload_t*1000, loadWidgets)
         })
     }, dbError)
 }
@@ -53,7 +52,9 @@ function addWidget(url){
             [url, 'rss', 0], 
         function(tx, results){
             console.log('addWidget', results.insertId)
-            loadWidget(results.insertId)
+            loadWidget(results.insertId, function(item){
+                loadWidgetData(item)
+            })
         })
     }, dbError)
 }
@@ -87,14 +88,23 @@ function updateWidgetLoadTime(id){
     }, dbError)
 }
 
-function loadWidget(id){
-    console.log('loadWidget', id)
+function getWidget(id, callback){
+    console.log('getWidget', id)
     db.transaction(function(tx){
         tx.executeSql('SELECT * FROM widgets WHERE id=?', [id], 
             function(tx, results){
-                loadWidgetData(results.rows.item(0))
+                if(results.rows.length == 1){
+                    callback(results.rows.item(0))
+                }
         })
     }, dbError)
+}
+
+function loadWidget(id, callback){
+    console.log('loadWidget', id)
+    getWidget(id, function(item){
+        loadWidgetData(item)
+    })
 }
 
 function loadWidgetData(item){
@@ -103,24 +113,11 @@ function loadWidgetData(item){
     var div = $(widget_div)
     var container = $('#widgetsContainer'+item.column)
     if(div.length == 0){
-        container.append('<div class="widget" id="widget-'+item.id+'" data-position="'+item.position+'"></div>')
-        div = $(widget_div)
-    }else{
-        div.empty()
-        console.log(div)
-        if(div[0].dataset.position != item.position){
-            div[0].dataset.position = item.position
-            reorderColumn(item.column)
-        }
-    }
-    div.append('<img class="widget-loader" src="img/loader.gif" />')
-    div.rss(item.url, {
-        limit: item.max_posts,
-        ssl: true,
-        effect: 'show',
-        layoutTemplate: '<div class="panel panel-default">'
-+'<div class="panel-heading">'
-+'  <strong><a href="{link}" target="_blank">{title}</a></strong>'
+        container.append('<div class="widget" id="widget-'+item.id+'" data-column="'+item.column+'" data-position="'+item.position+'">'
++' <div class="panel panel-default">'
++' <div class="panel-heading">'
++'  <img class="widget-loader" src="img/loader.gif" />'
++'  <strong><a class="feed-title" href="'+item.url+'" target="_blank">'+item.url.slice(0, 40)+'</a></strong>'
 +'  <div class="btn-group pull-right">'
 +'    <button class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">'
 +'      <span class="glyphicon glyphicon-wrench"></span>'
@@ -130,12 +127,51 @@ function loadWidgetData(item){
 +'      <li><a class="widget-delete" href="#">Delete</a></li>'
 +'    </ul>'
 +'  </div>'
++' </div>'
++' <div class="panel-body" id="rss-content-'+item.id+'">'
++' </div>'
++' </div>'
 +'</div>'
-+'  <div class="panel-body">'
-+'  <ul class="list-group">{entries}</ul>'
-+'  </div>'
-+'</div>'
-        ,
+        )
+        $(widget_div+' .widget-edit').click(function(e){
+            editWidgetShowModal(item.id)
+        })
+        $(widget_div+' .widget-delete').click(function(e){
+            deleteWidget(item.id)
+        })
+    }else{
+        if(div[0].dataset.column != item.column){
+            div[0].dataset.column = item.column
+            div.detach()
+            div.appendTo(container)
+            reorderColumn(item.column)
+        }
+        if(div[0].dataset.position != item.position){
+            div[0].dataset.position = item.position
+            reorderColumn(item.column)
+        }
+    }
+    loadFeedData(item)
+}
+
+function loadFeedData(item){
+    console.log('loadFeedData', item.id)
+    var widget_div = '#widget-'+item.id
+    var rss_div = $('#rss-content-'+item.id)
+    // avoid reload when posts are open
+    var posts = rss_div.find('.list-group-item')
+    if(posts.length > posts.children('.hide').length){
+        scheduleReload(item.id)
+        return
+    }
+    // reload rss
+    $(widget_div+' img.widget-loader').removeClass('hide')
+    rss_div.empty()
+    rss_div.rss(item.url, {
+        limit: item.max_posts,
+        ssl: true,
+        effect: 'show',
+        layoutTemplate: '<ul class="list-group">{entries}</ul>',
         entryTemplate: '<li class="list-group-item">'
 +'<div class="toggle-open"><span class="glyphicon glyphicon-chevron-right"></span>&nbsp{title}</div>'
 +'<div class="hide feed-content">'
@@ -143,21 +179,41 @@ function loadWidgetData(item){
 +'<hr/>'
 +'{body}'
 +'</div>'
-+'</li>'
-    ,
++'</li>',
         error: function(e){
             console.log('Error loading', item.id, e)
-            html = this.options.layoutTemplate.replace('{title}', item.url)
-            html = html.replace('{entries}', '<li class="list-group-item"><em>Error loading feed</em></li>')
+            $(widget_div+' img.widget-loader').addClass('hide')
+            html = this.options.layoutTemplate.replace('{entries}', 
+                '<li class="list-group-item"><em>Error loading feed</em></li>')
             this.target.append(html)
-            finishWidget(item)
         }
     }, function(){
+        $(widget_div+' img.widget-loader').addClass('hide')
+        var title = $(widget_div+' a.feed-title')
+        title.text(this.title)
+        title[0].href = this.link
         updateWidgetLoadTime(item.id)
         gapi.plusone.go(widget_div)
-        finishWidget(item)
+        $(widget_div+' .toggle-open').click(function(e){
+            var a = $(e.target)
+            var span = a.children('span')
+            var div = a.siblings('.feed-content')
+            if(div.hasClass('hide')){
+                div.removeClass('hide')
+                span.removeClass('glyphicon-chevron-right')
+                span.addClass('glyphicon-chevron-down')
+            }else{
+                div.addClass('hide')
+                span.addClass('glyphicon-chevron-right')
+                span.removeClass('glyphicon-chevron-down')
+            }
+        })
+        scheduleReload(item.id)
     })
+}
 
+function scheduleReload(id){
+    setTimeout(function(){ loadWidgetData(id); }, options.reload_t*1000)
 }
 
 function reorderColumn(column){
@@ -174,34 +230,14 @@ function reorderColumn(column){
     }
 }
 
-function finishWidget(item){
-    console.log('finishWidget', item.id)
-    var widget_div = '#widget-'+item.id
-    $(widget_div+' img.widget-loader').remove()
-    $(widget_div+' .toggle-open').click(function(e){
-        var a = $(e.target)
-        var span = a.children('span')
-        var div = a.siblings('.feed-content')
-        if(div.hasClass('hide')){
-            div.removeClass('hide')
-            span.removeClass('glyphicon-chevron-right')
-            span.addClass('glyphicon-chevron-down')
-        }else{
-            div.addClass('hide')
-            span.addClass('glyphicon-chevron-right')
-            span.removeClass('glyphicon-chevron-down')
-        }
-    })
-    $(widget_div+' .widget-edit').click(function(e){
+function editWidgetShowModal(id){
+    getWidget(id, function(item){
         $('#editWidgetModalID')[0].value = item.id
         $('#editWidgetModalURL')[0].value = item.url
         $('#editWidgetModalColumn')[0].value = item.column
         $('#editWidgetModalPosition')[0].value = item.position
         $('#editWidgetModalMaxPosts')[0].value = item.max_posts
         $('#editWidgetModal').modal('show')
-    })
-    $(widget_div+' .widget-delete').click(function(e){
-        deleteWidget(item.id)
     })
 }
 

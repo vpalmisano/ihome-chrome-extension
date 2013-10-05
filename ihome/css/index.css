@@ -1,0 +1,60 @@
+body {
+    font-family: 'Droid Sans', sans-serif;
+}
+
+.column{
+    margin: 0;
+    padding: 0 8px 0 8px;
+    width: 30%;
+    vertical-align: top;
+}
+
+img.navbar-brand{
+    margin: 0;
+    padding: 4px;
+    width: 48px;
+}
+
+.widget{
+
+}
+
+.widget .panel{
+    padding: 0;
+    margin: 0 0 12px 0;
+    border-bottom: none;
+}
+
+.widget .panel-heading{
+    padding: 4px 6px 4px 6px;
+    margin: 0;
+}
+
+.widget .panel-body{
+    padding: 0;
+    margin: 0;
+}
+
+.widget .list-group{
+    padding: 0;
+    margin: 0;
+}
+
+.widget .list-group-item{
+    padding: 4px 8px 4px 8px;
+    margin: 0;
+    border-top: none;
+    border-right: none;
+    border-left: none;
+}
+
+.widget .toggle-open:hover{
+    color: rgb(66, 139, 202);
+    cursor: pointer;
+}
+
+.widget hr{
+    margin: 4px;
+    padding: 0;
+}
+

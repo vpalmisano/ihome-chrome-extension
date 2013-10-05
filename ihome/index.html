@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head><title>iHome</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link href='http://fonts.googleapis.com/css?family=Droid+Sans' rel='stylesheet' type='text/css'>
+</head>
+<body>
+
+<div class="navbar navbar-default" role="navigation">  
+  <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+    <img class="navbar-brand" src="img/icon48.png" alt="iHome" />
+  </div>
+  <div class="collapse navbar-collapse navbar-ex1-collapse">
+    <!-- search form -->
+    <form class="navbar-form navbar-left" role="search" method="get" action="http://www.google.com/search" target="_blank">
+      <div class="form-group">
+        <input type="text" class="form-control" name="q" size="25" maxlength="255" value="" placeholder="Search" /> 
+      </div>
+      <input type="submit" class="btn btn-default" value="Search" />
+    </form>
+    <!-- actions -->
+    <ul class="nav navbar-nav">
+      <li><button class="btn btn-default navbar-btn" data-toggle="modal" data-target="#addWidgetModal"><span class="glyphicon glyphicon-plus"></button></li>
+    </ul>
+  </div>
+</div>
+
+<div class="container">
+  <table>
+    <tr id="rowContainer"></tr>
+  </table>
+</div>
+
+<!-- addWidgetModal -->
+<div id="addWidgetModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addWidgetModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Add Widget</h4>
+      </div>
+      <div class="modal-body">
+        <label for="addWidgetModalInput">RSS/Atom URL:</label>
+        <input class="form-control" id="addWidgetModalInput" type="text" size="50" maxlength="255" value="" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button id="addWidgetModalSave" type="button" class="btn btn-primary">Save</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<!-- editWidgetModal -->
+<div id="editWidgetModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editWidgetModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Edit Widget</h4>
+      </div>
+      <div class="modal-body">
+        <input id="editWidgetModalID" type="hidden" value="" />
+        <label for="editWidgetModalInput">RSS/Atom URL:</label>
+        <input class="form-control" id="editWidgetModalURL" type="text" size="50" maxlength="255" value="" />
+        <label for="editWidgetModalColumn">Column:</label>
+        <input class="form-control" id="editWidgetModalColumn" type="number" value="0" min="0" max="2" />
+        <label for="editWidgetModalPosition">Position:</label>
+        <input class="form-control" id="editWidgetModalPosition" type="number" value="0" min="0" />
+        <label for="editWidgetModalMaxPosts">Max posts:</label>
+        <input class="form-control" id="editWidgetModalMaxPosts" type="number" value="3" min="1" max="15" />
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button id="editWidgetModalSave" type="button" class="btn btn-primary">Save</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+</body>
+<script src="js/jquery-2.0.3.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/jquery.rss.js"></script>
+<script src="js/index.js"></script>
+<script type="text/javascript" src="https://apis.google.com/js/plusone.js">{"parsetags": "explicit"}</script>
+
+</html>

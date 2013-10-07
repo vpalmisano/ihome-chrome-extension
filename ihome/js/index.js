@@ -18,15 +18,15 @@
 var db = null
 var options = {
     columns: 3,
-    reload_t: 60*5
+    updateTime: 60*5
 }
 
 function dbError(t, e){
     console.log("db error", t, e)
 }
 
-function loadWidgets(){
-    console.log('loadWidgets')
+function getWidgets(callback, done){
+    console.log('getWidgets')
     db.transaction(function(tx){
         tx.executeSql('CREATE TABLE IF NOT EXISTS widgets ('
                 +'id INTEGER PRIMARY KEY AUTOINCREMENT'
@@ -40,16 +40,36 @@ function loadWidgets(){
                 +')')
         tx.executeSql('SELECT * FROM widgets ORDER BY position ASC', [], function(tx, results){
             for(var i=0; i<results.rows.length; i++){
-                loadWidgetData(results.rows.item(i))
+                callback(results.rows.item(i))
             }
+            if(done)
+                done()
         })
     }, dbError)
 }
 
-function addWidget(url){
+function loadWidgets(){
+    console.log('loadWidgets')
+    getWidgets(function(item){
+        loadWidgetData(item)
+    })
+}
+
+function addWidget(url, type, column, position, updateTime, max_posts){
+    console.log('addWidget', url, type, column, position, updateTime, max_posts)
     db.transaction(function(tx){
-        tx.executeSql('INSERT INTO widgets (url, type, lastUpdate) VALUES (?, ?, ?)', 
-            [url, 'rss', 0], 
+        if(!type)
+            type = 'rss'
+        if(!column)
+            column = 0
+        if(!position)
+            position = 0
+        if(!updateTime)
+            updateTime = options.updateTime
+        if(!max_posts)
+            max_posts = 5
+        tx.executeSql('INSERT INTO widgets (url, type, column, position, lastUpdate, updateTime, max_posts) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+            [url, 'rss', column, position, 0, updateTime, max_posts], 
         function(tx, results){
             console.log('addWidget', results.insertId)
             loadWidget(results.insertId, function(item){
@@ -161,7 +181,7 @@ function loadFeedData(item){
     // avoid reload when posts are open
     var posts = rss_div.find('.list-group-item')
     if(posts.length > posts.children('.hide').length){
-        scheduleReload(item.id)
+        scheduleReload(item)
         return
     }
     // reload rss
@@ -208,12 +228,12 @@ function loadFeedData(item){
                 span.removeClass('glyphicon-chevron-down')
             }
         })
-        scheduleReload(item.id)
+        scheduleReload(item)
     })
 }
 
-function scheduleReload(id){
-    setTimeout(function(){ loadWidget(id); }, options.reload_t*1000)
+function scheduleReload(item){
+    setTimeout(function(){ loadWidget(item.id); }, item.updateTime*1000)
 }
 
 function reorderColumn(column){
@@ -242,8 +262,12 @@ function editWidgetShowModal(id){
 }
 
 function loadOptions(){
-    if(localStorage['columns'])
-        options.columns = localStorage['columns']
+    if(localStorage['options'])
+        options = JSON.parse(localStorage['options'])
+}
+
+function saveOptions(){
+    localStorage['options'] = JSON.stringify(options)
 }
 
 $(function(){
@@ -276,5 +300,51 @@ $(function(){
             loadWidget(id)
         })
     })
-
+    $('#downloadConf').click(function(e){
+        console.log('downloadConf')
+        var o = {
+            'options': options,
+            'widgets': Array()
+        }
+        getWidgets(function(item){
+            o.widgets.push(item)
+        }, function(){
+            o = JSON.stringify(o)
+            var b = new Blob([o], {type : 'applicaton/json'})
+            var a = document.createElement('a')
+            a.href = window.webkitURL.createObjectURL(b)
+            a.download = 'iHome-settings.json'
+            a.click()
+        })
+    })
+    $('#importWidgetModalSave').click(function(e){
+        console.log('importWidgetModalSave')
+        
+        if($('#importFile')[0].files.length == 0){
+            $('#importFileError').text('Error: no file selected.')
+            return
+        }
+        var file = $('#importFile')[0].files[0]
+        var reader = new FileReader()
+        reader.onload = function(e){
+            try{
+                var o = JSON.parse(e.target.result)
+            }catch(error){
+                $('#importFileError').text('Error loading config file: '+error)
+                return
+            }
+            if(o.options){
+                options = o.options
+                saveOptions()
+            }
+            if(o.widgets){
+                o.widgets.forEach(function(item){
+                    addWidget(item.url, item.type, item.column, item.position, item.updateTime, item.max_posts)
+                })
+            }
+            $('#importWidgetModal').modal('hide')
+            $('#importFileError').text('')
+        }
+        reader.readAsText(file)
+    })
 })

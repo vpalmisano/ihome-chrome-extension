@@ -24,12 +24,14 @@
       <div class="form-group">
         <input type="text" class="form-control" name="q" size="25" maxlength="255" value="" placeholder="Search" /> 
       </div>
-      <input type="submit" class="btn btn-default" value="Search" />
+      <input type="submit" class="btn btn-default" value="Search" title="Search" />
     </form>
     <!-- actions -->
-    <ul class="nav navbar-nav">
-      <li><button class="btn btn-default navbar-btn" data-toggle="modal" data-target="#addWidgetModal"><span class="glyphicon glyphicon-plus"></button></li>
-    </ul>
+    <div class="btn-group">
+      <button class="btn btn-default navbar-btn" data-toggle="modal" data-target="#addWidgetModal" title="Add widget"><span class="glyphicon glyphicon-plus"></button>
+      <button class="btn btn-default navbar-btn" id="downloadConf"><span class="glyphicon glyphicon-cloud-download" title="Export settings"></button>
+      <button class="btn btn-default navbar-btn" data-toggle="modal" data-target="#importWidgetModal"><span class="glyphicon glyphicon-cloud-upload" title="Load settings"></button>
+    </div>
   </div>
 </div>
 
@@ -82,7 +84,6 @@
         <input class="form-control" id="editWidgetModalPosition" type="number" value="0" min="0" />
         <label for="editWidgetModalMaxPosts">Max posts:</label>
         <input class="form-control" id="editWidgetModalMaxPosts" type="number" value="3" min="1" max="15" />
-        </select>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
@@ -91,6 +92,27 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+<!-- importWidgetModal -->
+<div id="importWidgetModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="importWidgetModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Import settings</h4>
+      </div>
+      <div class="modal-body">
+        <input class="form-control" type="file" id="importFile" name="files[]" />
+        <div class="alert alert-danger" id="importFileError"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button id="importWidgetModalSave" type="button" class="btn btn-primary">Import</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 
 </body>
 <script src="js/jquery-2.0.3.min.js"></script>
